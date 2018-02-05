@@ -137,12 +137,13 @@ app.use(cors());
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({extended:true})); //for parsing application/x-www-form-urlencoded
 
-app.get("/fileUploader",onRequestImagebyDataSet);
+app.post("/imagesbyDataSet",onRequestImagebyDataSet);
 app.post("/createDataSet",onCreateDataSet);
-app.get("/getDataSet",onRetrieveDataSets);
+app.post("/getDataSet",onRetrieveDataSets);
 
 app.post("/registerUser",onRegisterUser);
 app.get("/getUserByName",onGetUserByName);
+app.post("/getUserByName",onGetUserByName);
 
 
 app.post("/labelColor",onRegisterLabelColor);
@@ -234,9 +235,9 @@ function onGetUserByName(req,res){
 console.log("Got Request for getting User details "); 
 
 let query_s = 'SELECT * FROM labelingapp.userRegistration WHERE username=?';
-let param_s = [req.query.username];
+let param_s = [req.body.username];
 
-console.log("Username ",req.query.username);
+console.log("Username ",req.body.username);
 
 client.execute(query_s,param_s)
   .then(result => {
@@ -325,8 +326,8 @@ console.log("Error on writing is ",err);
 
 function onRetrieveDataSets(req,res){
 
-console.log("User Id ",req.query.requestId);
-if(req.query.requestId==-1){
+console.log("User Id ",req.body.requestId);
+if(req.body.requestId==-1){
 
 console.log("Doing a Public Dataset ");
 let query_s = 'SELECT * FROM labelingapp.datasetbyuserid';
@@ -345,7 +346,7 @@ let query_s = 'SELECT * FROM labelingapp.datasetbyuserid WHERE userid=?';
 
 
 
-let param_s = [req.query.requestId];
+let param_s = [req.body.requestId];
 
 client.execute(query_s,param_s)
   .then(result => {
@@ -407,13 +408,13 @@ res.send(result.rows);
 function onRequestImagebyDataSet(req,res){
 
 console.log("Requesting From DB here ");
-console.log(req.query.dataset);
-console.log(req.query.userid);
+console.log(req.body.dataset);
+console.log(req.body.userid);
 
 let query_s = 'SELECT * FROM labelingapp.imagestorage WHERE user_id=? AND dataset_name=?';
 
 
-let param_s = [req.query.userid,req.query.dataset];
+let param_s = [req.body.userid,req.body.dataset];
 
 client.execute(query_s,param_s)
   .then(result => {

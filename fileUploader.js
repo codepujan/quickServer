@@ -26,6 +26,9 @@ const async = require('async');
 const Promise = require('bluebird');
 const util=require('util');
 let toArray = require('stream-to-array')
+const Uuid = require('cassandra-driver').types.Uuid;
+const TimeUuid = require('cassandra-driver').types.TimeUuid;
+
 
 const cassandra = require('cassandra-driver');
 const Tuple=require('cassandra-driver').types.Tuple;
@@ -131,6 +134,8 @@ app.use("/node_modules", express.static('node_modules'));
 //TODO : Need to handle similar case for delete also 
 
 app.use(cors());
+app.use(express.json()); // for parsing application/json
+app.use(express.urlencoded({extended:true})); //for parsing application/x-www-form-urlencoded
 
 app.get("/fileUploader",onRequestImagebyDataSet);
 app.post("/createDataSet",onCreateDataSet);
@@ -143,6 +148,10 @@ app.get("/getUserByName",onGetUserByName);
 app.post("/labelColor",onRegisterLabelColor);
 app.get("/labelColor",onRetrieveLabelColors);
 app.post("/addimagenote",onAddImageNote);
+
+
+
+app.post("/getClientId",onGetClientId);
 
 
 app.post("/fileUploader",function(req,res){
@@ -442,6 +451,38 @@ res.send(data);
 }
 
 
+function onGetClientId(req,res){
+
+console.log("Inserting Visitor by Id ");
+
+
+const insert_visitor_by_id = 'INSERT INTO labelingapp.visitors_by_id (visitor_id, access_time, from_ip, path, plugins, time_zone, user_agent) VALUES (?, ?, ? , ?, ?, ?, ?)';
+
+  const id = Uuid.random();
+  const time = new Date();
+  const from_ip = req.body.remote_ip;
+  const path = req.body.uri;
+  const user_agent = req.body.agent;
+  let plugins ;
+  let time_zone ;
+  const values = [id, time, from_ip,path,plugins, time_zone, user_agent];
+
+ res.type('plain');
+ 
+client.execute(insert_visitor_by_id, values, {prepare: true})
+  .then(result => {
+     console.log(`Row inserted: ${JSON.stringify(result)}`);
+     res.send(id.toString());
+   })
+  .catch(err => {
+     console.log(`Row insertion error: ${err}`);
+     res.send(err);
+   });
+
+
+
+
+}
 function onUpload(req, res) {
     
 console.log("Got a new Upload Request");

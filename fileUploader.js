@@ -142,7 +142,6 @@ app.post("/createDataSet",onCreateDataSet);
 app.post("/getDataSet",onRetrieveDataSets);
 
 app.post("/registerUser",onRegisterUser);
-app.get("/getUserByName",onGetUserByName);
 app.post("/getUserByName",onGetUserByName);
 
 
@@ -229,8 +228,11 @@ app.listen(port);
 
 
 
+//Query Constant 
+const csrf_check_query= 'SELECT count(*) FROM shipenger_test.visitors_by_id where visitor_id = ?';
 
-function onGetUserByName(req,res){
+
+async function onGetUserByName(req,res){
 
 console.log("Got Request for getting User details "); 
 
@@ -238,6 +240,19 @@ let query_s = 'SELECT * FROM labelingapp.userRegistration WHERE username=?';
 let param_s = [req.body.username];
 
 console.log("Username ",req.body.username);
+
+console.log("Client ID ",req.body.clientId);
+
+
+let csrf_check=[req.body.clientId];
+
+let result=await client.execute(csrf_check_query,csrf_check,{prepare:true});
+
+console.log(result);
+
+if(!result){
+       res.status(403).send("Data not understood");
+}
 
 client.execute(query_s,param_s)
   .then(result => {
@@ -324,9 +339,23 @@ console.log("Error on writing is ",err);
 }
 
 
-function onRetrieveDataSets(req,res){
+async function onRetrieveDataSets(req,res){
 
 console.log("User Id ",req.body.requestId);
+
+let csrf_check=[req.body.clientId];
+
+let result=await client.execute(csrf_check_query,csrf_check,{prepare:true});
+
+console.log(result);
+
+if(!result){
+       res.status(403).send("Data not understood");
+}
+
+
+
+
 if(req.body.requestId==-1){
 
 console.log("Doing a Public Dataset ");
@@ -405,11 +434,24 @@ res.send(result.rows);
 }
 
 
-function onRequestImagebyDataSet(req,res){
+async function onRequestImagebyDataSet(req,res){
 
 console.log("Requesting From DB here ");
 console.log(req.body.dataset);
 console.log(req.body.userid);
+
+let csrf_check=[req.body.clientId];
+
+let result=await client.execute(csrf_check_query,csrf_check,{prepare:true});
+
+console.log(result);
+
+if(!result){
+       res.status(403).send("Data not understood");
+}
+
+
+
 
 let query_s = 'SELECT * FROM labelingapp.imagestorage WHERE user_id=? AND dataset_name=?';
 

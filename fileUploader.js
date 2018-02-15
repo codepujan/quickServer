@@ -298,11 +298,22 @@ res.send({"success":true,"error":{}});
 }
 
 
-function onCreateDataSet(req,res){
+async function onCreateDataSet(req,res){
 console.log("Request of Creating Data Set ");
 
 console.log(req.body.classes);
 console.log(req.body.tags);
+
+let csrf_check=[req.body.clientId];
+
+let result=await client.execute(csrf_check_query,csrf_check,{prepare:true});
+
+console.log(result);
+
+if(!result){
+       res.status(403).send("Data not understood");
+}
+
 
 const query = 'INSERT INTO labelingapp.datasetbyuserid(userid,classes,description,name,tags,createdate,total,completed) VALUES (?,?,?,?,?,?,?,?)';
 const values = [req.body.username,req.body.classes,req.body.description,req.body.name,req.body.tags,new Date(),req.body.total,0];

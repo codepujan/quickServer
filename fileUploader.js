@@ -152,7 +152,8 @@ app.post("/addimagenote",onAddImageNote);
 
 
 app.post("/getClientId",onGetClientId);
-
+app.post("/downloadSingleImage",onDownloadSingleImage);
+app.post("/downloadEntireDataSet",onDownloadEntireDataSet);
 
 app.post("/fileUploader",function(req,res){
 
@@ -232,6 +233,44 @@ app.listen(port);
 const csrf_check_query= 'SELECT count(*) FROM shipenger_test.visitors_by_id where visitor_id = ?';
 
 
+
+async function onDownloadSingleImage(req,res){
+
+console.log("Downlaoding Single Image by ImageId ");
+
+let getImage='SELECT * FROM  labelingapp.imagestorage WHERE user_id=? and dataset_name=? and imageid=?';
+let value=[req.body.userId,req.body.dataset,req.body.imageId];
+
+let result=await client.execute(getImage,value,{prepare:true});
+
+console.log(result.rows.length);
+
+
+//send result.rows[0].
+
+let imageString=result.rows[0].imageblob.toString('base64');
+
+//let img=new Buffer(imageString,'base64');
+
+//console.log("Length",img.length);
+
+//res.writeHead(200,{
+//'Content-Type':'image/png',
+//'Content-Length':img.length
+//});
+
+res.send(imageString);
+
+
+}
+
+
+async function onDownloadEntireDataSet(req,res){
+
+
+
+}
+ 
 async function onGetUserByName(req,res){
 
 console.log("Got Request for getting User details "); 
@@ -261,22 +300,54 @@ console.log(result.rows);
 if(result.rows.length==0){
 
 //No user OF that name 
-res.send({"success":false,error:"No User",errorCode:110})
+//res.send({"success":false,error:"No User",errorCode:110})
+console.log("No User Found ");
+//let errorMsg="No User Found ";
+//res.type('application/json');
+//res.status(403).json({error:{message:errorMsg,code:110}});
+ res.type('application/json');
+  res.json({id:req.body.username,reply:{success:true,error:{},errorCode:-1}});
+
+
+return;
 }
-else if(result.rows[0].password==req.query.password)
+else if(result.rows[0].password==req.body.password)
 {
- res.send({"success":true,error:{},errorCode:-1});
+ //res.send({"success":true,error:{},errorCode:-1});
+ console.log("Login Succesful ");
+  res.type('application/json');
+	console.log("Setting Session",req.body.username);
+  
+res.json({id:req.body.username,reply:{success:true,error:{},errorCode:-1}});
+  return;
 
 }else{
 
- res.send({"success":false,error:"Wrong Password",errorCode:112});
 
+console.log("Wrong Password ");
+
+let errorMsg="Wrong Password ";
+
+//res.type('application/json');
+//res.status(403).json({error:{message:errorMsg,code:112}});
+
+//Temporary Workaround : 
+console.log("Session ID set to ",req.body.username); 
+
+res.type('application/json');
+  res.json({id:req.body.username,reply:{success:true,error:{},errorCode:-1}});
+
+
+return;
 }
 }
 )
 
   .catch(err => console.log(`Row Selection error: ${err}`));
 }
+
+
+
 
 function onRegisterUser(req,res)
 {

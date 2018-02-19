@@ -482,7 +482,7 @@ console.log(req.body.label);
 console.log(req.body.colorhex);
 
 const query = 'INSERT INTO labelingapp.labelsettingsbydataset(datasetname,label,colorhex) VALUES (?,?,?)';
-const values = [userDataBase,req.body.label,req.body.colorhex];
+const values = [req.body.database,req.body.label,req.body.colorhex];
 client.execute(query,values,{ prepare: true })
   .then(result => {
 console.log("Success");

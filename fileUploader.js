@@ -496,11 +496,10 @@ res.send({"success":true,"error":{}});
 
 function onRetrieveLabelColors(req,res){
 
-console.log("Retrieving Color Brooo ");
-
+console.log("Retrieving Color Brooo ",req.query.database);
 //TODO : on Client Side console.log(req.query.dataSetName);
 let query_s = 'SELECT * FROM labelingapp.labelsettingsbydataset WHERE datasetname=?';
-let param_s = [userDataBase];
+let param_s = [req.query.database];
 
 client.execute(query_s,param_s)
   .then(result => {
@@ -559,6 +558,11 @@ let data=[];
 console.log("Preparing Response Now ");
 for(i=0;i<cassandraResponse.rows.length;i++){
 console.log("ID",cassandraResponse.rows[i].imageid);
+
+
+// Should not happen but also , still just  a check 
+if(cassandraResponse.rows[i].imageblob==undefined)
+return;
 
 data.push({data:cassandraResponse.rows[i].imageblob.toString('base64'),
 imageId:cassandraResponse.rows[i].imageid});

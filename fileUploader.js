@@ -154,6 +154,7 @@ app.post("/addimagenote",onAddImageNote);
 app.post("/getClientId",onGetClientId);
 app.post("/downloadSingleImage",onDownloadSingleImage);
 app.post("/downloadEntireDataSet",onDownloadEntireDataSet);
+app.post("/addInstancecolor",onAddInstanceColor);
 
 app.post("/fileUploader",function(req,res){
 
@@ -423,7 +424,7 @@ console.log("Error on writing is ",err);
 
 async function onRetrieveDataSets(req,res){
 
-console.log("User Id ",req.body.requestId);
+console.log(" Dataset of User Id ",req.body.requestId);
 
 let csrf_check=[req.body.clientId];
 
@@ -578,6 +579,31 @@ res.send(data);
 
 
 }
+
+async function onAddInstanceColor(req,res){
+console.log("Adding Instance Color ");
+console.log(req.body.hex);
+
+const update_instancecolor_query='UPDATE labelingapp.imagestorage SET savedinstancehex=savedinstancehex+? WHERE user_id=? and dataset_name=? and imageid=?';
+const update_values=[[req.body.hex],req.body.userid,req.body.dataset,req.body.imageid];
+
+client.execute(update_instancecolor_query,update_values,{prepare:true})
+.then(result=>{
+
+console.log("Color Hex  Updated succesfully ");
+res.send({"success":true,"error":{}});
+
+})
+.catch(err=>{
+console.log("Error on writing is ",err);
+
+})
+
+
+
+
+}
+
 
 
 function onGetClientId(req,res){

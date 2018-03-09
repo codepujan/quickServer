@@ -239,7 +239,7 @@ async function onDownloadSingleImage(req,res){
 
 console.log("Downlaoding Single Image by ImageId ");
 
-let getImage='SELECT * FROM  labelingapp.imagestorage WHERE user_id=? and dataset_name=? and imageid=?';
+let getImage='SELECT * FROM  labelingapp.imagestorage WHERE user_id=? and dataset_name=? and uploadedat=?';
 let value=[req.body.userId,req.body.dataset,req.body.imageId];
 
 let result=await client.execute(getImage,value,{prepare:true});
@@ -404,7 +404,7 @@ res.send({"success":true,"error":{}});
 
 
 function onAddImageNote(req,res){
-const update_note_query='UPDATE labelingapp.imagestorage SET notes=? WHERE user_id=? and dataset_name=? and imageid=?';
+const update_note_query='UPDATE labelingapp.imagestorage SET notes=? WHERE user_id=? and dataset_name=? and uploadedat=?';
 const update_values=[req.body.note,req.body.userid,req.body.dataset,req.body.imageid];
 
 client.execute(update_note_query,update_values,{prepare:true})
@@ -558,7 +558,7 @@ let data=[];
 
 console.log("Preparing Response Now ");
 for(i=0;i<cassandraResponse.rows.length;i++){
-console.log("ID",cassandraResponse.rows[i].imageid);
+console.log("ID",cassandraResponse.rows[i].uploadedat);
 
 
 // Should not happen but also , still just  a check 
@@ -566,7 +566,7 @@ if(cassandraResponse.rows[i].imageblob==undefined)
 return;
 
 data.push({data:cassandraResponse.rows[i].imageblob.toString('base64'),
-imageId:cassandraResponse.rows[i].imageid});
+imageId:cassandraResponse.rows[i].uploadedat});
 }
 
 //console.log(data);
@@ -584,7 +584,7 @@ async function onAddInstanceColor(req,res){
 console.log("Adding Instance Color ");
 console.log(req.body.hex);
 
-const update_instancecolor_query='UPDATE labelingapp.imagestorage SET savedinstancehex=savedinstancehex+? WHERE user_id=? and dataset_name=? and imageid=?';
+const update_instancecolor_query='UPDATE labelingapp.imagestorage SET savedinstancehex=savedinstancehex+? WHERE user_id=? and dataset_name=? and uploadedat=?';
 const update_values=[[req.body.hex],req.body.userid,req.body.dataset,req.body.imageid];
 
 client.execute(update_instancecolor_query,update_values,{prepare:true})
@@ -911,9 +911,9 @@ function getChunkFilename(index, count) {
 function bufferFileUploader(bufferData,fileName,resObject,userid,userdatabase,success,failure){
 
 console.log("Cassandra Data Insertion Entrry ");
-const query = 'INSERT INTO labelingapp.imagestorage (user_id,dataset_name,image_name,imageid,imageblob,segmentedimageblob) VALUES (?,?,?,?,?,?)';
+const query = 'INSERT INTO labelingapp.imagestorage (user_id,dataset_name,image_name,imageid,imageblob,segmentedimageblob,uploadedAt,completedStatus) VALUES (?,?,?,?,?,?,?,?)';
 console.log("Image Name is",fileName);
-        const values = [userid,userdatabase,fileName+".jpg",fileName,bufferData,bufferData];
+        const values = [userid,userdatabase,fileName+".jpg",fileName,bufferData,bufferData,new Date(),0];
 client.execute(query,values,{ prepare: true })
   .then(result => {
 console.log("File writing Succes id",fileName);

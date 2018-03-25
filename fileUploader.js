@@ -150,7 +150,7 @@ app.get("/labelColor",onRetrieveLabelColors);
 app.post("/addimagenote",onAddImageNote);
 
 
-
+app.post("/getMetaData",onGetMetaData);
 app.post("/getClientId",onGetClientId);
 app.post("/downloadSingleImage",onDownloadSingleImage);
 app.post("/downloadEntireDataSet",onDownloadEntireDataSet);
@@ -430,7 +430,6 @@ let csrf_check=[req.body.clientId];
 
 let result=await client.execute(csrf_check_query,csrf_check,{prepare:true});
 
-console.log(result);
 
 if(!result){
        res.status(403).send("Data not understood");
@@ -495,6 +494,23 @@ res.send({"success":true,"error":{}});
 })
 }
 
+async function onGetMetaData(req,res){
+
+//req.body.userid 
+console.log("Requesting Meta Data of ",req.body.userid);
+
+let query_s='SELECT * FROM labelingapp.userstates WHERE user_id=?';
+let value_s=[req.body.userid];
+
+client.execute(query_s,value_s)
+.then(result=>{
+console.log("User Metadata ",result.rows[0]);
+res.send(result.rows[0])
+}).catch(err => console.log(`Row Selection error: ${err}`));
+
+
+}
+
 function onRetrieveLabelColors(req,res){
 
 console.log("Retrieving Color Brooo ",req.query.database);
@@ -526,7 +542,6 @@ let csrf_check=[req.body.clientId];
 
 let result=await client.execute(csrf_check_query,csrf_check,{prepare:true});
 
-console.log(result);
 
 if(!result){
        res.status(403).send("Data not understood");
@@ -540,42 +555,59 @@ let query_s = 'SELECT * FROM labelingapp.imagestorage WHERE user_id=? AND datase
 
 let param_s = [req.body.userid,req.body.dataset];
 
-client.execute(query_s,param_s)
-  .then(result => {
-console.log("Results Count ",result.rows.length);
-parseResponseAndSendBuffer(req,res,result);
-//res.send("See the Console Sir ");
+
+let resultSet=[];
+
+console.log("Page State I got is ",req.body.pagestate);
+
+if(req.body.pagestate=="start"){
+
+const options={prepare:true,fetchSize:5};
+client.eachRow(query_s,param_s,options,function(n,row){
+resultSet.push(row);
+},function(err,result){
+console.log("Page State is ",result.pageState);
+parseResponseAndSendBuffer(req,res,resultSet,result.pageState);
+});
+
+}else{
+const options={pageState:req.body.pagestate,prepare:true,fetchSize:5};
+client.eachRow(query_s,param_s,options,function(n,row){
+resultSet.push(row);
+},function(err,result){
+console.log("Page State is ",result.pageState);
+parseResponseAndSendBuffer(req,res,resultSet,result.pageState);
+});
 }
-)
-  .catch(err => console.log(`Row Selection error: ${err}`));
 
 }
 
 
 
-function parseResponseAndSendBuffer(req,res,cassandraResponse){
+function parseResponseAndSendBuffer(req,res,cassandraResponse,pageState){
 let data=[];
 
 console.log("Preparing Response Now ");
-for(i=0;i<cassandraResponse.rows.length;i++){
-console.log("ID",cassandraResponse.rows[i].uploadedat);
+for(i=0;i<cassandraResponse.length;i++){
+console.log("ID",cassandraResponse[i].uploadedat);
 
 
 // Should not happen but also , still just  a check 
-if(cassandraResponse.rows[i].imageblob==undefined)
+if(cassandraResponse[i].imageblob==undefined)
 return;
 
-data.push({data:cassandraResponse.rows[i].imageblob.toString('base64'),
-imageId:cassandraResponse.rows[i].uploadedat});
+data.push({data:cassandraResponse[i].imageblob.toString('base64'),
+imageId:cassandraResponse[i].uploadedat,
+completed:cassandraResponse[i].completedstatus});
 }
-
-//console.log(data);
 
 
 res.header('Access-Control-Allow-Origin', '*');
         res.header('Access-Control-Allow-Methods', 'GET, POST');
         res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-res.send(data);
+
+
+res.send({data:data,state:pageState});
 
 
 }

@@ -591,14 +591,26 @@ console.log("Preparing Response Now ");
 for(i=0;i<cassandraResponse.length;i++){
 console.log("ID",cassandraResponse[i].uploadedat);
 
-
-// Should not happen but also , still just  a check 
 if(cassandraResponse[i].imageblob==undefined)
 return;
+
+
+console.log("Completed Status ",cassandraResponse[i].completedstatus);
+
+if(cassandraResponse[i].completedstatus==1){
+console.log("Returning one of em Completed Images ");
+
+data.push({data:cassandraResponse[i].segmentedimageblob.toString('base64'),
+imageId:cassandraResponse[i].uploadedat,
+completed:cassandraResponse[i].completedstatus});
+}else{
+console.log("Returning one of em Incomplete Images "); 
 
 data.push({data:cassandraResponse[i].imageblob.toString('base64'),
 imageId:cassandraResponse[i].uploadedat,
 completed:cassandraResponse[i].completedstatus});
+
+}
 }
 
 
